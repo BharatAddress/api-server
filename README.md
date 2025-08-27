@@ -9,6 +9,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 # Open http://localhost:8000/collections and /collections/addresses/items
+# API docs: Swagger UI at /docs, ReDoc at /redoc, OpenAPI JSON at /openapi.json
 ```
 
 Docker:
