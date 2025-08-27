@@ -8,8 +8,13 @@ Quickstart:
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
-# Open http://localhost:8000/collections and /collections/addresses/items
+# Open http://localhost:8000/collections, /collections/addresses, /collections/addresses/items, /conformance
 # API docs: Swagger UI at /docs, ReDoc at /redoc, OpenAPI JSON at /openapi.json
+
+OpenAPI export:
+```bash
+python export_openapi.py  # writes openapi.json in repo root
+```
 ```
 
 Docker:

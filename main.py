@@ -1,8 +1,9 @@
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Dict, Any
 
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
+from fastapi.openapi.utils import get_openapi
 
 
 class Geometry(BaseModel):
@@ -81,7 +82,18 @@ def root():
     tags=["OGC API - Features"],
 )
 def collections():
-    return {"collections": [{"id": "addresses", "title": "Addresses"}]}
+    return {
+        "collections": [
+            {
+                "id": "addresses",
+                "title": "Addresses",
+                "links": [
+                    {"rel": "self", "type": "application/json", "href": "/collections/addresses"},
+                    {"rel": "items", "type": "application/geo+json", "href": "/collections/addresses/items"},
+                ],
+            }
+        ]
+    }
 
 
 @app.get(
@@ -93,4 +105,56 @@ def collections():
 def items(limit: int = Query(100, ge=1, le=10000, description="Max number of features")):
     data = FEATURES.model_copy(deep=True)
     data.features = data.features[:limit]
-    return JSONResponse(data.model_dump())
+    return JSONResponse(data.model_dump(), media_type="application/geo+json")
+
+
+@app.get(
+    "/collections/addresses",
+    summary="Describe the addresses collection",
+    tags=["OGC API - Features"],
+)
+def describe_addresses() -> Dict[str, Any]:
+    return {
+        "id": "addresses",
+        "title": "Addresses",
+        "extent": {
+            "spatial": {"bbox": [[68.0, 6.0, 97.5, 37.5]]},
+        },
+        "itemType": "feature",
+        "links": [
+            {"rel": "self", "type": "application/json", "href": "/collections/addresses"},
+            {"rel": "items", "type": "application/geo+json", "href": "/collections/addresses/items"},
+        ],
+    }
+
+
+@app.get(
+    "/conformance",
+    summary="List conformance classes",
+    tags=["OGC API - Features"],
+)
+def conformance() -> Dict[str, Any]:
+    return {
+        "conformsTo": [
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
+        ]
+    }
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    openapi_schema["servers"] = [{"url": "http://localhost:8000"}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi  # type: ignore
