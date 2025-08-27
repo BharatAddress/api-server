@@ -32,9 +32,18 @@ class Feature(BaseModel):
     geometry: Geometry
 
 
+class Link(BaseModel):
+    rel: str
+    href: str
+    type: Optional[str] = None
+
+
 class FeatureCollection(BaseModel):
     type: Literal["FeatureCollection"] = Field(default="FeatureCollection")
     features: List[Feature]
+    links: Optional[List[Link]] = None
+    numberMatched: Optional[int] = None
+    numberReturned: Optional[int] = None
 
 
 class CollectionsResponse(BaseModel):
@@ -102,10 +111,53 @@ def collections():
     summary="List address features",
     tags=["OGC API - Features"],
 )
-def items(limit: int = Query(100, ge=1, le=10000, description="Max number of features")):
-    data = FEATURES.model_copy(deep=True)
-    data.features = data.features[:limit]
-    return JSONResponse(data.model_dump(), media_type="application/geo+json")
+def items(
+    limit: int = Query(100, ge=1, le=10000, description="Max number of features"),
+    offset: int = Query(0, ge=0, description="Start index for pagination"),
+    bbox: Optional[str] = Query(
+        None,
+        description="minLon,minLat,maxLon,maxLat (comma-separated) to filter by bounding box",
+        examples={"blr": {"summary": "Bengaluru bbox", "value": "77.4,12.8,77.8,13.1"}},
+    ),
+):
+    # Filter by bbox if provided
+    feats = FEATURES.features
+    if bbox:
+        try:
+            parts = [float(x) for x in bbox.split(",")]
+            if len(parts) != 4:
+                raise ValueError
+            minx, miny, maxx, maxy = parts
+        except Exception:
+            return JSONResponse({"error": "Invalid bbox. Expected 'minLon,minLat,maxLon,maxLat'"}, status_code=400)
+        feats = [
+            f for f in feats
+            if (minx <= f.geometry.coordinates[0] <= maxx) and (miny <= f.geometry.coordinates[1] <= maxy)
+        ]
+
+    total = len(feats)
+    page = feats[offset: offset + limit]
+
+    base = "/collections/addresses/items"
+    params = []
+    if bbox:
+        params.append(f"bbox={bbox}")
+    params.append(f"limit={limit}")
+    params.append(f"offset={offset}")
+    self_href = base + ("?" + "&".join(params) if params else "")
+
+    links: List[Link] = [Link(rel="self", href=self_href, type="application/geo+json")]
+    if offset + limit < total:
+        next_offset = offset + limit
+        next_params = [p for p in params if not p.startswith("offset=")] + [f"offset={next_offset}"]
+        links.append(Link(rel="next", href=base + "?" + "&".join(next_params), type="application/geo+json"))
+    if offset > 0:
+        prev_offset = max(0, offset - limit)
+        prev_params = [p for p in params if not p.startswith("offset=")] + [f"offset={prev_offset}"]
+        links.append(Link(rel="prev", href=base + "?" + "&".join(prev_params), type="application/geo+json"))
+
+    coll = FeatureCollection(features=page, links=links, numberMatched=total, numberReturned=len(page))
+    return JSONResponse(coll.model_dump(), media_type="application/geo+json")
 
 
 @app.get(

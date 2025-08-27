@@ -1,3 +1,6 @@
+![CI](https://github.com/BharatAddress/api-server/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/BharatAddress/api-server/actions/workflows/codeql.yml/badge.svg)
+
 # Bharat Address API Server (Reference)
 
 Minimal OGC API Features-like read API using FastAPI. Serves an `addresses` collection from memory now; swap to PostGIS later.
@@ -15,6 +18,11 @@ OpenAPI export:
 ```bash
 python export_openapi.py  # writes openapi.json in repo root
 ```
+
+Query parameters (items endpoint):
+- `limit` (default 100): maximum features returned
+- `offset` (default 0): pagination index; response includes `self`/`next`/`prev` links
+- `bbox`: `minLon,minLat,maxLon,maxLat` filter
 ```
 
 Docker:
