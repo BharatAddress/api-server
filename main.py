@@ -119,6 +119,10 @@ def items(
         description="minLon,minLat,maxLon,maxLat (comma-separated) to filter by bounding box",
         examples={"blr": {"summary": "Bengaluru bbox", "value": "77.4,12.8,77.8,13.1"}},
     ),
+    pin: Optional[str] = Query(None, description="Filter by PIN code (exact match)"),
+    city: Optional[str] = Query(None, description="Filter by city (case-insensitive)"),
+    ulb_lgd: Optional[str] = Query(None, description="Filter by ULB LGD code (exact match)"),
+    digipin: Optional[str] = Query(None, description="Filter by DIGIPIN (matches primary/secondary)"),
 ):
     # Filter by bbox if provided
     feats = FEATURES.features
@@ -133,6 +137,20 @@ def items(
         feats = [
             f for f in feats
             if (minx <= f.geometry.coordinates[0] <= maxx) and (miny <= f.geometry.coordinates[1] <= maxy)
+        ]
+
+    # Attribute filtering
+    if pin:
+        feats = [f for f in feats if f.properties.pin == pin]
+    if city:
+        feats = [f for f in feats if f.properties.city.lower() == city.lower()]
+    if ulb_lgd:
+        feats = [f for f in feats if f.properties.ulb_lgd == ulb_lgd]
+    if digipin:
+        feats = [
+            f
+            for f in feats
+            if f.properties.primary_digipin == digipin or (f.properties.secondary_digipin == digipin)
         ]
 
     total = len(feats)
