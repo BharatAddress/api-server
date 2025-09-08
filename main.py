@@ -1,6 +1,7 @@
 from typing import List, Literal, Optional, Dict, Any
 
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 from fastapi.openapi.utils import get_openapi
@@ -22,8 +23,12 @@ class AddressProperties(BaseModel):
     primary_digipin: str
     secondary_digipin: Optional[str] = None
     ulpin: Optional[str] = None
-    entrance_point_source: Optional[str] = Field(default=None, description="survey|imagery|crowd|post")
-    quality: Optional[str] = Field(default=None, description="MunicipalityVerified|GeoVerified|CrowdPending")
+    entrance_point_source: Optional[str] = Field(
+        default=None, description="survey|imagery|crowd|post"
+    )
+    quality: Optional[str] = Field(
+        default=None, description="MunicipalityVerified|GeoVerified|CrowdPending"
+    )
 
 
 class Feature(BaseModel):
@@ -58,6 +63,15 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# CORS: allow all origins for demo/reference usage
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 FEATURES: FeatureCollection = FeatureCollection(
     features=[
@@ -84,6 +98,11 @@ def root():
     return RedirectResponse(url="/docs")
 
 
+@app.get("/healthz", include_in_schema=False)
+def healthz():
+    return {"status": "ok"}
+
+
 @app.get(
     "/collections",
     response_model=CollectionsResponse,
@@ -97,8 +116,16 @@ def collections():
                 "id": "addresses",
                 "title": "Addresses",
                 "links": [
-                    {"rel": "self", "type": "application/json", "href": "/collections/addresses"},
-                    {"rel": "items", "type": "application/geo+json", "href": "/collections/addresses/items"},
+                    {
+                        "rel": "self",
+                        "type": "application/json",
+                        "href": "/collections/addresses",
+                    },
+                    {
+                        "rel": "items",
+                        "type": "application/geo+json",
+                        "href": "/collections/addresses/items",
+                    },
                 ],
             }
         ]
@@ -121,8 +148,12 @@ def items(
     ),
     pin: Optional[str] = Query(None, description="Filter by PIN code (exact match)"),
     city: Optional[str] = Query(None, description="Filter by city (case-insensitive)"),
-    ulb_lgd: Optional[str] = Query(None, description="Filter by ULB LGD code (exact match)"),
-    digipin: Optional[str] = Query(None, description="Filter by DIGIPIN (matches primary/secondary)"),
+    ulb_lgd: Optional[str] = Query(
+        None, description="Filter by ULB LGD code (exact match)"
+    ),
+    digipin: Optional[str] = Query(
+        None, description="Filter by DIGIPIN (matches primary/secondary)"
+    ),
 ):
     # Filter by bbox if provided
     feats = FEATURES.features
@@ -133,10 +164,15 @@ def items(
                 raise ValueError
             minx, miny, maxx, maxy = parts
         except Exception:
-            return JSONResponse({"error": "Invalid bbox. Expected 'minLon,minLat,maxLon,maxLat'"}, status_code=400)
+            return JSONResponse(
+                {"error": "Invalid bbox. Expected 'minLon,minLat,maxLon,maxLat'"},
+                status_code=400,
+            )
         feats = [
-            f for f in feats
-            if (minx <= f.geometry.coordinates[0] <= maxx) and (miny <= f.geometry.coordinates[1] <= maxy)
+            f
+            for f in feats
+            if (minx <= f.geometry.coordinates[0] <= maxx)
+            and (miny <= f.geometry.coordinates[1] <= maxy)
         ]
 
     # Attribute filtering
@@ -150,11 +186,12 @@ def items(
         feats = [
             f
             for f in feats
-            if f.properties.primary_digipin == digipin or (f.properties.secondary_digipin == digipin)
+            if f.properties.primary_digipin == digipin
+            or (f.properties.secondary_digipin == digipin)
         ]
 
     total = len(feats)
-    page = feats[offset: offset + limit]
+    page = feats[offset : offset + limit]
 
     base = "/collections/addresses/items"
     params = []
@@ -167,14 +204,32 @@ def items(
     links: List[Link] = [Link(rel="self", href=self_href, type="application/geo+json")]
     if offset + limit < total:
         next_offset = offset + limit
-        next_params = [p for p in params if not p.startswith("offset=")] + [f"offset={next_offset}"]
-        links.append(Link(rel="next", href=base + "?" + "&".join(next_params), type="application/geo+json"))
+        next_params = [p for p in params if not p.startswith("offset=")] + [
+            f"offset={next_offset}"
+        ]
+        links.append(
+            Link(
+                rel="next",
+                href=base + "?" + "&".join(next_params),
+                type="application/geo+json",
+            )
+        )
     if offset > 0:
         prev_offset = max(0, offset - limit)
-        prev_params = [p for p in params if not p.startswith("offset=")] + [f"offset={prev_offset}"]
-        links.append(Link(rel="prev", href=base + "?" + "&".join(prev_params), type="application/geo+json"))
+        prev_params = [p for p in params if not p.startswith("offset=")] + [
+            f"offset={prev_offset}"
+        ]
+        links.append(
+            Link(
+                rel="prev",
+                href=base + "?" + "&".join(prev_params),
+                type="application/geo+json",
+            )
+        )
 
-    coll = FeatureCollection(features=page, links=links, numberMatched=total, numberReturned=len(page))
+    coll = FeatureCollection(
+        features=page, links=links, numberMatched=total, numberReturned=len(page)
+    )
     return JSONResponse(coll.model_dump(), media_type="application/geo+json")
 
 
@@ -192,8 +247,16 @@ def describe_addresses() -> Dict[str, Any]:
         },
         "itemType": "feature",
         "links": [
-            {"rel": "self", "type": "application/json", "href": "/collections/addresses"},
-            {"rel": "items", "type": "application/geo+json", "href": "/collections/addresses/items"},
+            {
+                "rel": "self",
+                "type": "application/json",
+                "href": "/collections/addresses",
+            },
+            {
+                "rel": "items",
+                "type": "application/geo+json",
+                "href": "/collections/addresses/items",
+            },
         ],
     }
 

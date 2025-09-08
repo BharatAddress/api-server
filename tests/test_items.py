@@ -12,7 +12,7 @@ def test_items_geojson_media_type_and_pagination_links():
     data = r.json()
     assert data["type"] == "FeatureCollection"
     # With limit=1 and at least one feature total, next link should be present if more than one
-    assert any(l["rel"] == "self" for l in data.get("links", []))
+    assert any(link["rel"] == "self" for link in data.get("links", []))
 
 
 def test_items_pin_filter_returns_match():
@@ -29,4 +29,3 @@ def test_items_invalid_bbox_400():
     r = client.get("/collections/addresses/items", params={"bbox": "not,a,bbox"})
     assert r.status_code == 400
     assert r.json()["error"].startswith("Invalid bbox")
-
