@@ -5,6 +5,8 @@
 
 Minimal OGC API Features-like read API using FastAPI. Serves an `addresses` collection from memory now; swap to PostGIS later.
 
+Website: https://bharataddress.github.io
+
 Quickstart:
 
 ```bash
