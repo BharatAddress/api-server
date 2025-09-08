@@ -31,3 +31,9 @@ def test_cors_preflight_options():
     assert r.headers.get("access-control-allow-origin") == "*"
     allow_methods = r.headers.get("access-control-allow-methods", "")
     assert "GET" in allow_methods or allow_methods == "*"
+
+
+def test_readyz_ok():
+    r = client.get("/readyz")
+    assert r.status_code == 200
+    assert r.json() == {"status": "ready"}

@@ -63,14 +63,12 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS: allow all origins for demo/reference usage
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+import os
+
+# CORS: configurable via env, default allow all
+_origins = os.getenv("CORS_ALLOW_ORIGINS", "*").strip()
+_allow_origins = ["*"] if _origins == "*" else [o.strip() for o in _origins.split(",") if o.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=_allow_origins, allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
 
 FEATURES: FeatureCollection = FeatureCollection(
@@ -101,6 +99,12 @@ def root():
 @app.get("/healthz", include_in_schema=False)
 def healthz():
     return {"status": "ok"}
+
+
+@app.get("/readyz", include_in_schema=False)
+def readyz():
+    # In this demo app, readiness is same as liveness
+    return {"status": "ready"}
 
 
 @app.get(
