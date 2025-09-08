@@ -15,6 +15,14 @@ uvicorn main:app --reload --port 8000
 # API docs: Swagger UI at /docs, ReDoc at /redoc, OpenAPI JSON at /openapi.json
 ```
 
+CORS configuration:
+
+```bash
+# Allow docs site and org landing page origins
+export CORS_ALLOW_ORIGINS="https://bharataddress.github.io,https://example.com"
+uvicorn main:app --reload --port 8000
+```
+
 OpenAPI export:
 
 ```bash
@@ -25,6 +33,7 @@ Query parameters (items endpoint):
 - `limit` (default 100): maximum features returned
 - `offset` (default 0): pagination index; response includes `self`/`next`/`prev` links
 - `bbox`: `minLon,minLat,maxLon,maxLat` filter
+- Optional attribute filters: `pin`, `city` (case-insensitive), `ulb_lgd`, `digipin`
 
 Docker:
 
