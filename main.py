@@ -1,4 +1,5 @@
 from typing import List, Literal, Optional, Dict, Any
+import os
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,12 +64,18 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-import os
-
 # CORS: configurable via env, default allow all
 _origins = os.getenv("CORS_ALLOW_ORIGINS", "*").strip()
-_allow_origins = ["*"] if _origins == "*" else [o.strip() for o in _origins.split(",") if o.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=_allow_origins, allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
+_allow_origins = (
+    ["*"] if _origins == "*" else [o.strip() for o in _origins.split(",") if o.strip()]
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_allow_origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 FEATURES: FeatureCollection = FeatureCollection(
