@@ -43,3 +43,7 @@ Docker:
 docker build -t ghcr.io/bharataddress/api-server:dev .
 docker run -p 8000:8000 ghcr.io/bharataddress/api-server:dev
 ```
+
+## Contributor Guide
+
+- Central guidelines: https://github.com/BharatAddress/.github/blob/main/AGENTS.md
