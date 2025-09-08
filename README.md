@@ -13,8 +13,10 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 # Open http://localhost:8000/collections, /collections/addresses, /collections/addresses/items, /conformance
 # API docs: Swagger UI at /docs, ReDoc at /redoc, OpenAPI JSON at /openapi.json
+```
 
 OpenAPI export:
+
 ```bash
 python export_openapi.py  # writes openapi.json in repo root
 ```
@@ -23,7 +25,6 @@ Query parameters (items endpoint):
 - `limit` (default 100): maximum features returned
 - `offset` (default 0): pagination index; response includes `self`/`next`/`prev` links
 - `bbox`: `minLon,minLat,maxLon,maxLat` filter
-```
 
 Docker:
 
