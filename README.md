@@ -7,43 +7,50 @@ Minimal OGC API Features-like read API using FastAPI. Serves an `addresses` coll
 
 Website: https://bharataddress.github.io
 
-Quickstart:
+## At a glance
+| Item | Details |
+| --- | --- |
+| Stack | FastAPI + Uvicorn |
+| Spec | OGC API Features |
+| Data | In-memory sample collection |
 
+## Quickstart
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
-# Open http://localhost:8000/collections, /collections/addresses, /collections/addresses/items, /conformance
-# API docs: Swagger UI at /docs, ReDoc at /redoc, OpenAPI JSON at /openapi.json
+# Open http://localhost:8000/collections, /collections/addresses/items, /conformance
+# API docs: Swagger UI at /docs, ReDoc at /redoc
 ```
 
-CORS configuration:
-
+## CORS configuration
 ```bash
 # Allow docs site and org landing page origins
 export CORS_ALLOW_ORIGINS="https://bharataddress.github.io,https://example.com"
 uvicorn main:app --reload --port 8000
 ```
 
-OpenAPI export:
-
+## OpenAPI export
 ```bash
 python export_openapi.py  # writes openapi.json in repo root
 ```
 
-Query parameters (items endpoint):
-- `limit` (default 100): maximum features returned
-- `offset` (default 0): pagination index; response includes `self`/`next`/`prev` links
-- `bbox`: `minLon,minLat,maxLon,maxLat` filter
-- Optional attribute filters: `pin`, `city` (case-insensitive), `ulb_lgd`, `digipin`
+## Query parameters (items endpoint)
+- `limit` (default 100): maximum features returned.
+- `offset` (default 0): pagination index; response includes `self`/`next`/`prev` links.
+- `bbox`: `minLon,minLat,maxLon,maxLat` filter.
+- Optional attribute filters: `pin`, `city` (case-insensitive), `ulb_lgd`, `digipin`.
 
-Docker:
-
+## Docker
 ```bash
 docker build -t ghcr.io/bharataddress/api-server:dev .
 docker run -p 8000:8000 ghcr.io/bharataddress/api-server:dev
 ```
 
-## Contributor Guide
+## Repo layout
+- `main.py`: FastAPI app and routes.
+- `export_openapi.py`: OpenAPI export helper.
+- `data/`: sample data used in tests.
 
+## Contributor Guide
 - Central guidelines: https://github.com/BharatAddress/.github/blob/main/AGENTS.md
